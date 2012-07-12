@@ -174,7 +174,7 @@ sub trash {
 
     my @t = localtime();
     my $ts = sprintf("%04d%02d%02dT%02d:%02d:%02d",
-                     $t[5]+1900, $t[4], $t[3]+1, $t[2], $t[1], $t[0]);
+                     $t[5]+1900, $t[4]+1, $t[3], $t[2], $t[1], $t[0]);
     syswrite($fh, "[Trash Info]\nPath=$file0\nDeletionDate=$ts\n");
     close $fh or die "Can't write trash info for $name in $trash_dir: $!";
 
@@ -187,15 +187,14 @@ sub trash {
 sub recover {
     require Cwd;
 
-    my ($self, $file0, $trash_dir0) = @_;
+    my ($self, $file, $trash_dir0) = @_;
 
-    my $afile = Cwd::abs_path($file0) or die "File does not exist: $file0";
-    my @res = $self->list_contents($trash_dir0, {search_path=>$afile});
-    die "File not found in trash: $file0" unless @res;
+    my @res = $self->list_contents($trash_dir0, {search_path=>$file});
+    die "File not found in trash: $file" unless @res;
 
     my $trash_dir = $res[0]{trash_dir};
-    unless (rename("$trash_dir/files/$res[0]{entry}", $afile)) {
-        die "Can't rename $trash_dir/files/$res[0]{entry} to $afile: $!";
+    unless (rename("$trash_dir/files/$res[0]{entry}", $file)) {
+        die "Can't rename $trash_dir/files/$res[0]{entry} to $file: $!";
     }
     unlink("$trash_dir/info/$res[0]{entry}.trashinfo");
 }
@@ -204,9 +203,9 @@ sub _erase {
     require Cwd;
     require File::Remove;
 
-    my ($self, $file0, $trash_dir0) = @_;
+    my ($self, $file, $trash_dir) = @_;
 
-    my @ct = $self->list_contents($trash_dir0, {search_path=>$file0});
+    my @ct = $self->list_contents($trash_dir, {search_path=>$file});
 
     my @res;
     for (@ct) {
@@ -247,7 +246,7 @@ sub empty {
 
 =head1 DESCRIPTION
 
-This module lets you trash/erase/restore files, also lists the contents of trash
+This module lets you trash/erase/restore files, also list the contents of trash
 directories. This module follows the freedesktop.org trash specification [1],
 with some notes/caveats:
 
