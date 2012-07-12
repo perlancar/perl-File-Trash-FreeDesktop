@@ -267,7 +267,7 @@ checking.
 =item * Currently meant to be used by normal users, not administrators
 
 This means, among others, this module only creates C<$topdir/.Trash-$uid>
-instead of <$topdir/.Trash>. And there are less paranoid checks being done.
+instead of C<$topdir/.Trash>. And there are less paranoid checks being done.
 
 =back
 
@@ -299,7 +299,7 @@ a list of records like the sample below:
 
  ({entry=>"file1", path=>"/home/steven/file1", deletion_date=>1342061508},
   {entry=>"file1.2", path=>"/home/steven/sub/file1", deletion_date=>1342061580},
-  {path=>"/tmp/dir1", deletion_date=>1342061510})
+  {entry=>"dir1", path=>"/tmp/dir1", deletion_date=>1342061510})
 
 =head2 $trash->trash($file)
 
