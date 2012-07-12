@@ -52,7 +52,7 @@ subtest "erase" => sub {
 };
 
 subtest "empty" => sub {
-    $trash->trash("sub");
+    $trash->trash("sub"); # also test removing directories
     $trash->empty($ht);
     ok(!(-e "sub"), "sub removed");
 };
