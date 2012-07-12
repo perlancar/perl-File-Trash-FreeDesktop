@@ -297,9 +297,12 @@ If $trash_dir is not specified, list contents from all existing trash
 directories. Die if $trash_dir does not exist or inaccessible or corrupt. Return
 a list of records like the sample below:
 
- ({entry=>"file1", path=>"/home/steven/file1", deletion_date=>1342061508},
-  {entry=>"file1.2", path=>"/home/steven/sub/file1", deletion_date=>1342061580},
-  {entry=>"dir1", path=>"/tmp/dir1", deletion_date=>1342061510})
+ ({entry=>"file1", path=>"/home/steven/file1", deletion_date=>1342061508,
+   trash_dir=>"/home/steven/.local/share/Trash"},
+  {entry=>"file1.2", path=>"/home/steven/sub/file1", deletion_date=>1342061580,
+   trash_dir=>"/home/steven/.local/share/Trash"},
+  {entry=>"dir1", path=>"/tmp/dir1", deletion_date=>1342061510,
+   trash_dir=>"/tmp/.Trash-1000"})
 
 =head2 $trash->trash($file)
 
