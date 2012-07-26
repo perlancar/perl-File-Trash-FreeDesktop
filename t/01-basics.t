@@ -61,7 +61,7 @@ subtest "empty" => sub {
 # TODO test: list_trashes
 # TODO test: list_contents for all trashes
 # TODO test: empty for all trashes
-# TODO test: # TODO test: test errors ...
+# TODO test: test errors ...
 #   - die on {trash,recover,erase} nonexisting file
 #   - die on recover to existing file
 #   - die on fail to create $topdir/.Trash-$uid
