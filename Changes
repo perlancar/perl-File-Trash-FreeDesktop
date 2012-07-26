@@ -1,5 +1,13 @@
 Revision history for File-Trash-FreeDesktop
 
+0.03    2012-07-26 (SHARYANTO)
+
+        [ENHANCEMENTS]
+
+        - By default sort list_contents() result by deletion_date (older first)
+          and file name.
+
+
 0.02    2012-07-26 (SHARYANTO)
 
         [ENHANCEMENTS]
