@@ -147,6 +147,11 @@ sub list_contents {
         }
     }
 
+    @res = sort {
+        $a->{deletion_date} <=> $b->{deletion_date} ||
+        $a->{entry} cmp $b->{entry}
+    } @res;
+
     @res;
 }
 
