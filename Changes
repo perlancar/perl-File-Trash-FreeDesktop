@@ -1,5 +1,17 @@
 Revision history for File-Trash-FreeDesktop
 
+0.04    2012-07-27 (SHARYANTO)
+
+        [ENHANCEMENTS]
+
+        - recover(): check restore target first, die if restore target exists.
+
+        - recover(): add option to ignore if file to be recovered is not found
+          in trash.
+
+        - trash(): add option to ignore if file to be trashed is not found.
+
+
 0.03    2012-07-26 (SHARYANTO)
 
         [ENHANCEMENTS]
