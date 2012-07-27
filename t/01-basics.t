@@ -40,11 +40,13 @@ subtest "trash" => sub {
     ok((-f ".local/share/Trash/info/f1.2.trashinfo"), "f1.2.trashinfo created");
     ok((-f ".local/share/Trash/files/f1.2"), "files/f1.2 created");
 };
+# state at this point: T(f1 f2)
 
 subtest "recover" => sub {
     $trash->recover("f1", $ht);
     ok((-f "f1"), "f1 recreated");
 };
+# state at this point: f1 T(f2)
 
 subtest "erase" => sub {
     $trash->erase("sub/f1", $ht);
@@ -52,21 +54,49 @@ subtest "erase" => sub {
     ok(!(-e ".local/share/Trash/info/f1.2.trashinfo"),"f1.2.trashinfo removed");
     ok(!(-e ".local/share/Trash/files/f1.2"), "files/f1.2 removed");
 };
+# state at this point: f1 T()
 
 subtest "empty" => sub {
     $trash->trash("sub"); # also test removing directories
     $trash->empty($ht);
     ok(!(-e "sub"), "sub removed");
 };
+# state at this point: T()
+
+subtest "trash nonexisting file" => sub {
+    dies_ok  { $trash->trash("f3") } "trash nonexisting file -> dies";
+    lives_ok { $trash->trash({on_not_found=>'ignore'}, "f3") }
+        "if on_not_found is set to 'ignore' -> ignored";
+};
+# state at this point: T()
+
+subtest "recover nonexisting file" => sub {
+    dies_ok  { $trash->recover("f3") } "recover nonexisting file -> dies";
+    lives_ok { $trash->recover({on_not_found=>'ignore'}, "f3") }
+        "if on_not_found is set to 'ignore' -> ignored";
+};
+# state at this point: T()
+
+write_file("f3", "f3a");
+$trash->trash("f3");
+write_file("f3", "f3b");
+subtest "recover to an existing file" => sub {
+    dies_ok { $trash->recover("f3") } "restore target already exists";
+    is(scalar read_file("f3"), "f3b", "existing target not replaced");
+    unlink "f3";
+    lives_ok { $trash->recover("f3") } "can recover after target cleared";
+    is(scalar read_file("f3"), "f3a", "the correct file recovered");
+};
+# state at this point: f3 T()
 
 # TODO test: {trash,recover,erase} in $topdir/.Trash-$uid
 # TODO test: list_trashes
 # TODO test: list_contents for all trashes
 # TODO test: empty for all trashes
 # TODO test: test errors ...
-#   - die on {trash,recover,erase} nonexisting file
-#   - die on recover to existing file
 #   - die on fail to create $topdir/.Trash-$uid
+# TODO: deleting/listing/recovering a symlink
+# TODO: deleting/listing/recovering a symlink with invalid target (-f false)
 
 DONE_TESTING:
 done_testing;

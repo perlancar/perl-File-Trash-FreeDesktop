@@ -5,6 +5,7 @@ use strict;
 use warnings;
 
 use Fcntl;
+use SHARYANTO::File::Util qw(file_exists);
 
 # VERSION
 
@@ -45,7 +46,8 @@ sub _select_trash {
     require Sys::Filesystem::MountPoint;
 
     my ($self, $file0, $create) = @_;
-    my $afile = Cwd::abs_path($file0) or die "File doesn't exist: $file0";
+    file_exists($file0) or die "File doesn't exist: $file0";
+    my $afile = Cwd::abs_path($file0);
 
     my $mp = Sys::Filesystem::MountPoint::path_to_mount_point($afile);
     my @trash_dirs;
@@ -158,9 +160,24 @@ sub list_contents {
 sub trash {
     require Cwd;
 
-    my ($self, $file0) = @_;
+    my $self = shift;
+    my $opts;
+    if (ref($_[0]) eq 'HASH') {
+        $opts = shift;
+    } else {
+        $opts = {};
+    }
+    $opts->{on_not_found} //= 'die';
+    my ($file0) = @_;
 
-    my $afile = Cwd::abs_path($file0) or die "File does not exist: $file0";
+    unless (file_exists $file0) {
+        if ($opts->{on_not_found} eq 'ignore') {
+            return undef;
+        } else {
+            die "File does not exist: $file0";
+        }
+    }
+    my $afile = Cwd::abs_path($file0);
     my $trash_dir = $self->_select_trash($afile, 1);
 
     # try to create info/NAME first
@@ -196,10 +213,26 @@ sub trash {
 sub recover {
     require Cwd;
 
-    my ($self, $file, $trash_dir0) = @_;
+    my $self = shift;
+    my $opts;
+    if (ref($_[0]) eq 'HASH') {
+        $opts = shift;
+    } else {
+        $opts = {};
+    }
+    $opts->{on_not_found} //= 'die';
+    my ($file, $trash_dir0) = @_;
+
+    die "Restore target already exists: $file" if file_exists($file);
 
     my @res = $self->list_contents($trash_dir0, {search_path=>$file});
-    die "File not found in trash: $file" unless @res;
+    unless (@res) {
+        if ($opts->{on_not_found} eq 'ignore') {
+            return 0;
+        } else {
+            die "File not found in trash: $file";
+        }
+    }
 
     my $trash_dir = $res[0]{trash_dir};
     unless (rename("$trash_dir/files/$res[0]{entry}", $file)) {
@@ -313,7 +346,7 @@ a list of records like the sample below:
   {entry=>"dir1", path=>"/tmp/dir1", deletion_date=>1342061510,
    trash_dir=>"/tmp/.Trash-1000"})
 
-=head2 $trash->trash($file) => STR
+=head2 $trash->trash([\%opts, ]$file) => STR
 
 Trash a file (move it into trash dir).
 
@@ -326,12 +359,35 @@ Will also die if moving file to trash (currently using rename()) fails.
 Upon success, will return the location of the file in the trash dir (e.g.
 C</tmp/.Trash-1000/files/foo>).
 
-=head2 $trash->recover($file[, $trash_dir])
+If first argument is a hashref, it will be accepted as options. Known options:
+
+=over 4
+
+=item * on_not_found => STR (default 'die')
+
+Specify what to do when the file to be deleted is not found. The default is
+'die', but can also be set to 'ignore' and return immediately.
+
+=back
+
+
+=head2 $trash->recover([\%opts, ]$file[, $trash_dir])
 
 Recover a file from trash.
 
 Unless $trash_dir is specified, will search in all existing user's trash dirs.
-Will die on errors (e.g. file is not found in trash).
+Will die on errors.
+
+If first argument is a hashref, it will be accepted as options. Known options:
+
+=over 4
+
+=item * on_not_found => STR (default 'die')
+
+Specify what to do when file is not found in the trash. The default is 'die',
+but can also be set to 'ignore' and return immediately.
+
+=back
 
 =head2 $trash->erase($file[, $trash_dir]) => LIST
 
