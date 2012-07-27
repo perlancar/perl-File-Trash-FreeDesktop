@@ -66,14 +66,14 @@ subtest "empty" => sub {
 subtest "trash nonexisting file" => sub {
     dies_ok  { $trash->trash("f3") } "trash nonexisting file -> dies";
     lives_ok { $trash->trash({on_not_found=>'ignore'}, "f3") }
-        "if on_not_found is set to 'ignore' -> ignored";
+        "on_not_found=ignore";
 };
 # state at this point: T()
 
 subtest "recover nonexisting file" => sub {
     dies_ok  { $trash->recover("f3") } "recover nonexisting file -> dies";
     lives_ok { $trash->recover({on_not_found=>'ignore'}, "f3") }
-        "if on_not_found is set to 'ignore' -> ignored";
+        "on_not_found=ignore";
 };
 # state at this point: T()
 
@@ -82,6 +82,9 @@ $trash->trash("f3");
 write_file("f3", "f3b");
 subtest "recover to an existing file" => sub {
     dies_ok { $trash->recover("f3") } "restore target already exists";
+    is(scalar read_file("f3"), "f3b", "existing target not replaced");
+    lives_ok { $trash->recover({on_target_exists=>'ignore'}, "f3") }
+        "on_target_exists=ignore";
     is(scalar read_file("f3"), "f3b", "existing target not replaced");
     unlink "f3";
     lives_ok { $trash->recover("f3") } "can recover after target cleared";
