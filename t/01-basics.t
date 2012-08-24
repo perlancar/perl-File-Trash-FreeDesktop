@@ -124,8 +124,13 @@ subtest "trash symlink" => sub {
     $trash->trash("s21");
     ok(!file_exists("s21"), "s21 deleted");
     ok( file_exists("f21"), "f21 not deleted");
+
+    $trash->recover("s21");
+    ok( file_exists("s21"), "s21 recovered");
+    ok((-l "s21"), "s21 still a symlink");
+    ok( file_exists("f21"), "f21 still not deleted");
+
     unlink "f21";
-    $trash->empty($ht);
 };
 # state at this point: f1 T()
 
