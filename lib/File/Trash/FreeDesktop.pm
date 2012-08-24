@@ -244,10 +244,13 @@ sub recover {
     }
 
     my $trash_dir = $res[0]{trash_dir};
-    unless (rename("$trash_dir/files/$res[0]{entry}", $file)) {
-        die "Can't rename $trash_dir/files/$res[0]{entry} to $file: $!";
+    my $ifile = "$trash_dir/info/$res[0]{entry}.trashinfo";
+    my $tfile = "$trash_dir/files/$res[0]{entry}";
+    $log->tracef("Recovering from trash %s -> %s ...", $tfile, $file);
+    unless (rename($tfile, $file)) {
+        die "Can't rename $tfile to $file: $!";
     }
-    unlink("$trash_dir/info/$res[0]{entry}.trashinfo");
+    unlink($ifile);
 }
 
 sub _erase {
