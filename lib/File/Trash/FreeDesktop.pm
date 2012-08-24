@@ -3,6 +3,7 @@ package File::Trash::FreeDesktop;
 use 5.010;
 use strict;
 use warnings;
+use Log::Any '$log';
 
 use Fcntl;
 use SHARYANTO::File::Util qw(file_exists);
@@ -202,6 +203,7 @@ sub trash {
     syswrite($fh, "[Trash Info]\nPath=$file0\nDeletionDate=$ts\n");
     close $fh or die "Can't write trash info for $name in $trash_dir: $!";
 
+    $log->tracef("Trashing %s -> %s ...", $afile, $tfile);
     unless (rename($afile, $tfile)) {
         unlink "$trash_dir/info/$name.trashinfo";
         die "Can't rename $afile to $tfile: $!";
