@@ -92,6 +92,26 @@ subtest "recover to an existing file" => sub {
 };
 # state at this point: f3 T()
 
+subtest "recover: mtime opt" => sub {
+    write_file("f10", "f10.10");
+    utime 1, 10, "f10";
+    $trash->trash("f10");
+
+    write_file("f10", "f10.20");
+    utime 1, 20, "f10";
+    $trash->trash("f10");
+
+    #ok(!(-f "f10"), "f10 doesn't exist");
+
+    dies_ok { $trash->recover({mtime=>30}, "f10") } "mtime not found -> dies";
+    $trash->recover({mtime=>20}, "f10");
+    is(scalar read_file("f10"), "f10.20", "f10 (mtime 20) recovered first");
+    unlink "f10";
+    $trash->recover({mtime=>10}, "f10");
+    is(scalar read_file("f10"), "f10.10", "f10 (mtime 10) recovered");
+};
+# state at this point: f1 T()
+
 # TODO test: {trash,recover,erase} in $topdir/.Trash-$uid
 # TODO test: list_trashes
 # TODO test: list_contents for all trashes

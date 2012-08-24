@@ -5,13 +5,13 @@ use strict;
 use warnings;
 use Log::Any '$log';
 
+use Cwd qw(abs_path);
 use Fcntl;
 use SHARYANTO::File::Util qw(file_exists);
 
 # VERSION
 
 sub new {
-    require Cwd;
     require File::HomeDir::FreeDesktop;
     require Sys::Filesystem::MountPoint;
 
@@ -20,7 +20,7 @@ sub new {
     my $home = File::HomeDir::FreeDesktop->my_home
         or die "Can't get homedir, ".
             "probably not a freedesktop-compliant environment?";
-    $opts{_home} = Cwd::abs_path($home);
+    $opts{_home} = abs_path($home);
     $opts{_home_mp} = Sys::Filesystem::MountPoint::path_to_mount_point(
         $opts{_home});
 
@@ -43,12 +43,11 @@ sub _home_trash {
 }
 
 sub _select_trash {
-    require Cwd;
     require Sys::Filesystem::MountPoint;
 
     my ($self, $file0, $create) = @_;
     file_exists($file0) or die "File doesn't exist: $file0";
-    my $afile = Cwd::abs_path($file0);
+    my $afile = abs_path($file0);
 
     my $mp = Sys::Filesystem::MountPoint::path_to_mount_point($afile);
     my @trash_dirs;
@@ -86,7 +85,6 @@ sub _mk_home_trash {
 }
 
 sub list_trashes {
-    require Cwd;
     require List::MoreUtils;
     require Sys::Filesystem;
 
@@ -95,7 +93,7 @@ sub list_trashes {
     my $sysfs = Sys::Filesystem->new;
     my @mp = $sysfs->filesystems;
 
-    my @res = map { Cwd::abs_path($_) }
+    my @res = map { abs_path($_) }
         grep {-d} (
             $self->_home_trash,
             (map { ("$_/.Trash-$>", "$_/.Trash/$>") } @mp)
@@ -121,8 +119,15 @@ sub _parse_trashinfo {
 }
 
 sub list_contents {
-    my ($self, $trash_dir0, $opts) = @_;
-    $opts //= {};
+    my $self = shift;
+
+    my $opts;
+    if (ref($_[0]) eq 'HASH') {
+        $opts = shift;
+    } else {
+        $opts = {};
+    }
+    my ($trash_dir0) = @_;
 
     my @trash_dirs = $trash_dir0 ? ($trash_dir0) : ($self->list_trashes);
     my @res;
@@ -134,14 +139,21 @@ sub list_contents {
         for my $e (readdir $dh) {
             next unless $e =~ /\.trashinfo$/;
             local $/;
-            open my($fh), "$trash_dir/info/$e"
-                or die "Can't open trash info file $e: $!";
+            my $ifile = "$trash_dir/info/$e";
+            open my($fh), $ifile or die "Can't open trash info file $e: $!";
             my $content = <$fh>;
             close $fh;
             my $pres = $self->_parse_trashinfo($content);
             die "Can't parse trash info file $e: $pres" unless ref($pres);
+            my $afile = "$trash_dir/files/$e";
             if (defined $opts->{search_path}) {
                 next unless $pres->{path} eq $opts->{search_path};
+            }
+            if (defined $opts->{mtime}) {
+                my $afile = "$trash_dir/files/$e";
+                $afile =~ s/\.trashinfo$//;
+                my @st = lstat($afile);
+                next unless !@st || $st[9] == $opts->{mtime};
             }
             $pres->{trash_dir} = $trash_dir;
             $e =~ s/\.trashinfo//; $pres->{entry} = $e;
@@ -159,8 +171,6 @@ sub list_contents {
 }
 
 sub trash {
-    require Cwd;
-
     my $self = shift;
     my $opts;
     if (ref($_[0]) eq 'HASH') {
@@ -178,7 +188,7 @@ sub trash {
             die "File does not exist: $file0";
         }
     }
-    my $afile = Cwd::abs_path($file0);
+    my $afile = abs_path($file0);
     my $trash_dir = $self->_select_trash($afile, 1);
 
     # try to create info/NAME first
@@ -200,7 +210,7 @@ sub trash {
     my @t = localtime();
     my $ts = sprintf("%04d%02d%02dT%02d:%02d:%02d",
                      $t[5]+1900, $t[4]+1, $t[3], $t[2], $t[1], $t[0]);
-    syswrite($fh, "[Trash Info]\nPath=$file0\nDeletionDate=$ts\n");
+    syswrite($fh, "[Trash Info]\nPath=$afile\nDeletionDate=$ts\n");
     close $fh or die "Can't write trash info for $name in $trash_dir: $!";
 
     $log->tracef("Trashing %s -> %s ...", $afile, $tfile);
@@ -213,8 +223,6 @@ sub trash {
 }
 
 sub recover {
-    require Cwd;
-
     my $self = shift;
     my $opts;
     if (ref($_[0]) eq 'HASH') {
@@ -224,42 +232,46 @@ sub recover {
     }
     $opts->{on_not_found}     //= 'die';
     $opts->{on_target_exists} //= 'die';
-    my ($file, $trash_dir0) = @_;
+    my ($file0, $trash_dir0) = @_;
 
-    if (file_exists($file)) {
+    if (file_exists($file0)) {
         if ($opts->{on_target_exists} eq 'ignore') {
             return 0;
         } else {
-            die "Restore target already exists: $file";
+            die "Restore target already exists: $file0";
         }
     }
+    my $afile = abs_path($file0);
 
-    my @res = $self->list_contents($trash_dir0, {search_path=>$file});
+    my @res = $self->list_contents({
+        search_path => $afile,
+        mtime       => $opts->{mtime},
+    }, $trash_dir0);
     unless (@res) {
         if ($opts->{on_not_found} eq 'ignore') {
             return 0;
         } else {
-            die "File not found in trash: $file";
+            die "File not found in trash: $file0";
         }
     }
 
     my $trash_dir = $res[0]{trash_dir};
     my $ifile = "$trash_dir/info/$res[0]{entry}.trashinfo";
     my $tfile = "$trash_dir/files/$res[0]{entry}";
-    $log->tracef("Recovering from trash %s -> %s ...", $tfile, $file);
-    unless (rename($tfile, $file)) {
-        die "Can't rename $tfile to $file: $!";
+    $log->tracef("Recovering from trash %s -> %s ...", $tfile, $afile);
+    unless (rename($tfile, $afile)) {
+        die "Can't rename $tfile to $afile: $!";
     }
     unlink($ifile);
 }
 
 sub _erase {
-    require Cwd;
     require File::Remove;
 
-    my ($self, $file, $trash_dir) = @_;
+    my ($self, $file0, $trash_dir) = @_;
+    my $afile = defined($file0) ? abs_path($file0) : undef;
 
-    my @ct = $self->list_contents($trash_dir, {search_path=>$file});
+    my @ct = $self->list_contents({search_path=>$afile}, $trash_dir);
 
     my @res;
     for (@ct) {
@@ -403,6 +415,16 @@ but can also be set to 'ignore' and return immediately.
 
 Specify what to do when restore target already exists. The default is 'die', but
 can also be set to 'ignore' and return immediately.
+
+=item * mtime => INT
+
+Only recover file if file's mtime is the one specified. This can be useful to
+make sure that the file we recover is really the one that we trashed earlier,
+especially if we trash several files with the same path.
+
+(Ideally, instead of mtime we should use some unique ID that we write in the
+.trashinfo file, but I fear that an extra parameter in .trashinfo file might
+confuse other implementations.)
 
 =back
 
