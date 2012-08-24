@@ -11,6 +11,7 @@ use File::chdir;
 use File::Slurp;
 use File::Temp qw(tempdir);
 use File::Trash::FreeDesktop;
+use SHARYANTO::File::Util qw(file_exists);
 
 my $dir = tempdir(CLEANUP=>1);
 
@@ -109,6 +110,22 @@ subtest "recover: mtime opt" => sub {
     unlink "f10";
     $trash->recover({mtime=>10}, "f10");
     is(scalar read_file("f10"), "f10.10", "f10 (mtime 10) recovered");
+    $trash->empty($ht);
+};
+# state at this point: f1 T()
+
+subtest "trash symlink" => sub {
+    plan skip_all => "symlink() not available"
+        unless eval { symlink "", ""; 1 };
+
+    write_file("f21", "");
+    symlink "f21", "s21";
+
+    $trash->trash("s21");
+    ok(!file_exists("s21"), "s21 deleted");
+    ok( file_exists("f21"), "f21 not deleted");
+    unlink "f21";
+    $trash->empty($ht);
 };
 # state at this point: f1 T()
 

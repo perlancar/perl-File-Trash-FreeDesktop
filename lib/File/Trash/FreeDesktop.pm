@@ -5,9 +5,8 @@ use strict;
 use warnings;
 use Log::Any '$log';
 
-use Cwd qw(abs_path);
 use Fcntl;
-use SHARYANTO::File::Util qw(file_exists);
+use SHARYANTO::File::Util qw(file_exists l_abs_path);
 
 # VERSION
 
@@ -20,7 +19,7 @@ sub new {
     my $home = File::HomeDir::FreeDesktop->my_home
         or die "Can't get homedir, ".
             "probably not a freedesktop-compliant environment?";
-    $opts{_home} = abs_path($home);
+    $opts{_home} = l_abs_path($home);
     $opts{_home_mp} = Sys::Filesystem::MountPoint::path_to_mount_point(
         $opts{_home});
 
@@ -47,7 +46,7 @@ sub _select_trash {
 
     my ($self, $file0, $create) = @_;
     file_exists($file0) or die "File doesn't exist: $file0";
-    my $afile = abs_path($file0);
+    my $afile = l_abs_path($file0);
 
     my $mp = Sys::Filesystem::MountPoint::path_to_mount_point($afile);
     my @trash_dirs;
@@ -93,7 +92,7 @@ sub list_trashes {
     my $sysfs = Sys::Filesystem->new;
     my @mp = $sysfs->filesystems;
 
-    my @res = map { abs_path($_) }
+    my @res = map { l_abs_path($_) }
         grep {-d} (
             $self->_home_trash,
             (map { ("$_/.Trash-$>", "$_/.Trash/$>") } @mp)
@@ -188,7 +187,7 @@ sub trash {
             die "File does not exist: $file0";
         }
     }
-    my $afile = abs_path($file0);
+    my $afile = l_abs_path($file0);
     my $trash_dir = $self->_select_trash($afile, 1);
 
     # try to create info/NAME first
@@ -241,7 +240,7 @@ sub recover {
             die "Restore target already exists: $file0";
         }
     }
-    my $afile = abs_path($file0);
+    my $afile = l_abs_path($file0);
 
     my @res = $self->list_contents({
         search_path => $afile,
@@ -269,7 +268,7 @@ sub _erase {
     require File::Remove;
 
     my ($self, $file0, $trash_dir) = @_;
-    my $afile = defined($file0) ? abs_path($file0) : undef;
+    my $afile = defined($file0) ? l_abs_path($file0) : undef;
 
     my @ct = $self->list_contents({search_path=>$afile}, $trash_dir);
 
