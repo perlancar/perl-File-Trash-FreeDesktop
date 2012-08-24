@@ -1,5 +1,16 @@
 Revision history for File-Trash-FreeDesktop
 
+0.06    2012-08-24 (SHARYANTO)
+
+        [ENHANCEMENTS]
+
+        - recover(): Add option 'mtime'.
+
+        [BUG FIXES]
+
+        - Path was not recorded in absolute in .trashinfo
+
+
 0.05    2012-07-27 (SHARYANTO)
 
         [ENHANCEMENTS]
