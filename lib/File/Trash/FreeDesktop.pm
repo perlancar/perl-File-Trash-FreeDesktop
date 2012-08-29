@@ -144,15 +144,16 @@ sub list_contents {
             close $fh;
             my $pres = $self->_parse_trashinfo($content);
             die "Can't parse trash info file $e: $pres" unless ref($pres);
-            my $afile = "$trash_dir/files/$e";
             if (defined $opts->{search_path}) {
                 next unless $pres->{path} eq $opts->{search_path};
             }
+            my $afile = "$trash_dir/files/$e"; $afile =~ s/\.trashinfo\z//;
             if (defined $opts->{mtime}) {
-                my $afile = "$trash_dir/files/$e";
-                $afile =~ s/\.trashinfo$//;
                 my @st = lstat($afile);
                 next unless !@st || $st[9] == $opts->{mtime};
+            }
+            if (defined $opts->{suffix}) {
+                next unless $afile =~ /\.\Q$opts->{suffix}\E\z/;
             }
             $pres->{trash_dir} = $trash_dir;
             $e =~ s/\.trashinfo//; $pres->{entry} = $e;
@@ -194,10 +195,11 @@ sub trash {
     my $name0 = $afile; $name0 =~ s!.*/!!; $name0 = "WTF" unless length($name0);
     my $name;
     my $fh;
-    my $i = 1; my $limit = 1000;
+    my $i = 1; my $limit = defined($opts->{suffix}) ? 1 : 1000;
     my $tinfo;
     while (1) {
-        $name = $name0 . ($i > 1 ? ".$i" : "");
+        $name = $name0 . (defined($opts->{suffix}) ? ".$opts->{suffix}" :
+                              ($i > 1 ? ".$i" : ""));
         $tinfo = "$trash_dir/info/$name.trashinfo";
         last if sysopen($fh, $tinfo, O_WRONLY | O_EXCL | O_CREAT);
         die "Can't create trash info file $name.trashinfo in $trash_dir: $!"
@@ -245,6 +247,7 @@ sub recover {
     my @res = $self->list_contents({
         search_path => $afile,
         mtime       => $opts->{mtime},
+        suffix      => $opts->{suffix},
     }, $trash_dir0);
     unless (@res) {
         if ($opts->{on_not_found} eq 'ignore') {
@@ -391,6 +394,15 @@ If first argument is a hashref, it will be accepted as options. Known options:
 Specify what to do when the file to be deleted is not found. The default is
 'die', but can also be set to 'ignore' and return immediately.
 
+=item * suffix => STR
+
+Pick a suffix. Normally, file will be stored in C<files/ORIGNAME> inside trash
+directory, or, if that file already exists, in C<files/ORIGNAME.1>,
+C<files/ORIGNAME.2>, and so on. This setting overrides this behavior and picks
+C<files/ORIGNAME.SUFFIX>. Can be used to identify and restore particular file
+later. However, will die if file with that suffix already exists, so be sure to
+pick a unique suffix.
+
 =back
 
 
@@ -424,6 +436,13 @@ especially if we trash several files with the same path.
 (Ideally, instead of mtime we should use some unique ID that we write in the
 .trashinfo file, but I fear that an extra parameter in .trashinfo file might
 confuse other implementations.)
+
+See also C<suffix>, which is the recommended way to identify and recover
+particular file.
+
+=item * suffix => STR
+
+Only recover file having the specified suffix, chosen previously during trash().
 
 =back
 

@@ -102,14 +102,35 @@ subtest "recover: mtime opt" => sub {
     utime 1, 20, "f10";
     $trash->trash("f10");
 
-    #ok(!(-f "f10"), "f10 doesn't exist");
-
     dies_ok { $trash->recover({mtime=>30}, "f10") } "mtime not found -> dies";
     $trash->recover({mtime=>20}, "f10");
     is(scalar read_file("f10"), "f10.20", "f10 (mtime 20) recovered first");
     unlink "f10";
     $trash->recover({mtime=>10}, "f10");
     is(scalar read_file("f10"), "f10.10", "f10 (mtime 10) recovered");
+    $trash->empty($ht);
+};
+# state at this point: f1 T()
+
+subtest "recover: suffix opt" => sub {
+    write_file("f10", "f10.a");
+    $trash->trash({suffix=>"a"}, "f10");
+
+    write_file("f10", "f10.b");
+    $trash->trash({suffix=>"b"}, "f10");
+
+    write_file("f10", "f10.another-b");
+    dies_ok { $trash->recover({suffix=>"b"}, "f10") }
+        "suffix already exists -> dies";
+    unlink "f10";
+
+    dies_ok { $trash->recover({suffix=>"c"}, "f10") }
+        "suffix not found -> dies";
+    $trash->recover({suffix=>"b"}, "f10");
+    is(scalar read_file("f10"), "f10.b", "f10 (suffix b) recovered first");
+    unlink "f10";
+    $trash->recover({suffix=>"a"}, "f10");
+    is(scalar read_file("f10"), "f10.a", "f10 (suffix a) recovered");
     $trash->empty($ht);
 };
 # state at this point: f1 T()
