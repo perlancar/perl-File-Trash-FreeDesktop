@@ -1,5 +1,13 @@
 Revision history for File-Trash-FreeDesktop
 
+0.08    2012-08-29 (SHARYANTO)
+
+        [ENHANCEMENTS]
+
+        - Add option 'suffix' to trash() and recover(). Mark 'mtime' deprecated
+          (or, to be exact, not recommended since now).
+
+
 0.07    2012-08-24 (SHARYANTO)
 
         [ENHANCEMENTS]
