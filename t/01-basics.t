@@ -151,6 +151,9 @@ subtest "trash symlink" => sub {
     ok((-l "s21"), "s21 still a symlink");
     ok( file_exists("f21"), "f21 still not deleted");
 
+    symlink "/", "s22";
+    $trash->trash("s22"); # doesn't die because trying to create /.Trash-1000
+
     unlink "f21";
 };
 # state at this point: f1 T()
