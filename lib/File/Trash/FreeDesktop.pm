@@ -49,7 +49,12 @@ sub _select_trash {
     file_exists($file0) or die "File doesn't exist: $file0";
     my $afile = l_abs_path($file0);
 
-    my $mp = Sys::Filesystem::MountPoint::path_to_mount_point($afile);
+    # since path_to_mount_point resolves symlink (sigh), we need to remove the
+    # leaf. otherwise: /mnt/sym -> / will cause mount point to become / instead
+    # of /mnt
+    my $afile2 = $afile; $afile2 =~ s!/[^/]+\z!! if (-l $file0);
+    my $mp = Sys::Filesystem::MountPoint::path_to_mount_point($afile2);
+
     my @trash_dirs;
     my $home_trash = $self->_home_trash;
     if ($self->{_home_mp} eq $mp) {
@@ -58,6 +63,7 @@ sub _select_trash {
         my $mp = $mp eq "/" ? "" : $mp; # prevent double-slash //
         @trash_dirs = ("$mp/.Trash-$>", "$mp/.Trash/$>");
     }
+    #$log->tracef("mp=%s, afile=%s, trash_dirs = %s", $mp,$afile,\@trash_dirs);
 
     for (@trash_dirs) {
         (-d $_) and do {
