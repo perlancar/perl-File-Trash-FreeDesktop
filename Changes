@@ -6,7 +6,6 @@ Revision history for File-Trash-FreeDesktop
 
         - Add Synopsis and a couple of logging messages.
 
-
         [BUG FIXES]
 
         - Fix symlink handling when determining mountpoint.
