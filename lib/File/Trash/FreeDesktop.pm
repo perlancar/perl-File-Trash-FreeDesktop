@@ -311,6 +311,36 @@ sub empty {
 
  my $trash = File::Trash::FreeDesktop->new;
 
+ # list available (for the running user) trash directories
+ my @trashes = $trash->list_trashes;
+
+ # list the content of a trash directory
+ my @content = $trash->list_contents("/tmp/.Trash-1000");
+
+ # list the content of all available trash directories
+ my @content = $trash->list_contents;
+
+ # trash a file
+ $trash->trash("/foo/bar");
+
+ # specify some options when trashing
+ $trash->trash({on_not_found=>'ignore'}, "/foo/bar");
+
+ # recover a file from trash (untrash)
+ $trash->recover('/foo/bar');
+
+ # untrash a file from a specific trash directory
+ $trash->recover('/tmp/file', '/tmp/.Trash-1000');
+
+ # specify some options when untrashing
+ $trash->recover({on_not_found=>'ignore', on_target_exists=>'ignore'}, '/path');
+
+ # empty a trash directory
+ $trash->empty("$ENV{HOME}/.local/share/Trash");
+
+ # empty all available trashes
+ $trash->empty;
+
 
 =head1 DESCRIPTION
 
@@ -332,10 +362,15 @@ checking.
 
 =item * Currently cross-device copying is not implemented/done
 
-=item * Currently meant to be used by normal users, not administrators
+It should not matter though, because trash directories are per-filesystem.
 
-This means, among others, this module only creates C<$topdir/.Trash-$uid>
-instead of C<$topdir/.Trash>. And there are less paranoid checks being done.
+=back
+
+Some other notes:
+
+=over 4
+
+=item *
 
 =back
 
