@@ -190,6 +190,7 @@ sub trash {
     }
     my $afile = l_abs_path($file0);
     my $trash_dir = $self->_select_trash($afile, 1);
+    $log->tracef("Selected trash for %s = %s", $afile, $trash_dir);
 
     # try to create info/NAME first
     my $name0 = $afile; $name0 =~ s!.*/!!; $name0 = "WTF" unless length($name0);
