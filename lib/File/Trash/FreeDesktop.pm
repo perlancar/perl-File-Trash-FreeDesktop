@@ -28,6 +28,7 @@ sub new {
 
 sub _mk_trash {
     my ($self, $trash_dir) = @_;
+    $log->tracef("Creating trash directory %s ...", $trash_dir);
     for ("", "/files", "/info") {
         my $d = "$trash_dir$_";
         unless (-d $d) {
@@ -59,7 +60,10 @@ sub _select_trash {
     }
 
     for (@trash_dirs) {
-        (-d $_) and return $_;
+        (-d $_) and do {
+            $log->tracef("Selected trash for %s = %s", $afile, $_);
+            return $_;
+        };
     }
 
     if ($create) {
@@ -69,6 +73,7 @@ sub _select_trash {
             $self->_mk_trash($trash_dirs[0]);
         }
     }
+    $log->tracef("Selected trash for %s = %s", $afile, $trash_dirs[0]);
     return $trash_dirs[0];
 }
 
@@ -190,7 +195,6 @@ sub trash {
     }
     my $afile = l_abs_path($file0);
     my $trash_dir = $self->_select_trash($afile, 1);
-    $log->tracef("Selected trash for %s = %s", $afile, $trash_dir);
 
     # try to create info/NAME first
     my $name0 = $afile; $name0 =~ s!.*/!!; $name0 = "WTF" unless length($name0);
