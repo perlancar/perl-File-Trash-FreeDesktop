@@ -1,5 +1,17 @@
 Revision history for File-Trash-FreeDesktop
 
+0.09    2012-08-30 (SHARYANTO)
+
+        [ENHANCEMENTS]
+
+        - Add Synopsis and a couple of logging messages.
+
+
+        [BUG FIXES]
+
+        - Fix symlink handling when determining mountpoint.
+
+
 0.08    2012-08-29 (SHARYANTO)
 
         [ENHANCEMENTS]
