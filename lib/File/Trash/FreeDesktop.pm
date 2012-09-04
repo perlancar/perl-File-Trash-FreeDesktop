@@ -42,6 +42,17 @@ sub _home_trash {
     "$self->{_home}/.local/share/Trash";
 }
 
+sub _mk_home_trash {
+    my ($self) = @_;
+    for (".local", ".local/share") {
+        my $d = "$self->{_home}/$_";
+        unless (-d $d) {
+            mkdir $d or die "Can't mkdir $d: $!";
+        }
+    }
+    $self->_mk_trash("$self->{_home}/.local/share/Trash");
+}
+
 sub _select_trash {
     require Sys::Filesystem::MountPoint;
 
@@ -81,17 +92,6 @@ sub _select_trash {
     }
     $log->tracef("Selected trash for %s = %s", $afile, $trash_dirs[0]);
     return $trash_dirs[0];
-}
-
-sub _mk_home_trash {
-    my ($self) = @_;
-    for (".local", ".local/share") {
-        my $d = "$self->{_home}/$_";
-        unless (-d $d) {
-            mkdir $d or die "Can't mkdir $d: $!";
-        }
-    }
-    $self->_mk_trash("$self->{_home}/.local/share/Trash");
 }
 
 sub list_trashes {
