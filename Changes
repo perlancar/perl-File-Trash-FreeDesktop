@@ -1,5 +1,13 @@
 Revision history for File-Trash-FreeDesktop
 
+0.10    2012-09-05 (SHARYANTO)
+
+        [ENHANCEMENTS]
+
+        - Handle incomplete trash directory (e.g. missing info/, happens from
+          time to time to trash in /tmp, causing test failures).
+
+
 0.09    2012-08-30 (SHARYANTO)
 
         [ENHANCEMENTS]
