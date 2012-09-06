@@ -101,8 +101,8 @@ sub _select_trash {
             $self->_mk_trash($sel);
         }
     }
-    $log->tracef("Selected trash for %s = %s", $afile, $trash_dirs[0]);
-    return $trash_dirs[0];
+
+    return $sel;
 }
 
 sub list_trashes {
