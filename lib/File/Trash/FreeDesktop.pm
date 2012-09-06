@@ -25,10 +25,10 @@ sub new {
 
 sub _mk_trash {
     my ($self, $trash_dir) = @_;
-    $log->tracef("Creating trash directory %s ...", $trash_dir);
     for ("", "/files", "/info") {
         my $d = "$trash_dir$_";
         unless (-d $d) {
+            $log->tracef("Creating directory %s ...", $d);
             mkdir $d, 0700 or die "Can't mkdir $d: $!";
         }
     }
