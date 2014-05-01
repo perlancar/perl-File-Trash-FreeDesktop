@@ -1,5 +1,12 @@
 Revision history for File-Trash-FreeDesktop
 
+0.13    2014-05-01 (SHARYANTO)
+
+        - No functional changes.
+
+        - Remove debugging print (steven--).
+
+
 0.12    2014-05-01 (SHARYANTO)
 
         - Also try file's mountpoint + /tmp for trash dir (providing it's still
