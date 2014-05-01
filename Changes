@@ -1,5 +1,13 @@
 Revision history for File-Trash-FreeDesktop
 
+0.12    2014-05-01 (SHARYANTO)
+
+        - Also try file's mountpoint + /tmp for trash dir (providing it's still
+          under the same mountpoint as the file). This avoids failure when
+          trying to delete files in /tmp in typical situation (previously the
+          module tried to create /.Trash-1000).
+
+
 0.11    2012-09-06 (SHARYANTO)
 
         - No functional changes.
