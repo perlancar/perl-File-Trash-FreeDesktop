@@ -154,10 +154,10 @@ sub list_contents {
     my @res;
   L1:
     for my $trash_dir (@trash_dirs) {
-        next unless -d $trash_dir;
-        next unless -d "$trash_dir/info";
+        #next unless -d $trash_dir;
+        #next unless -d "$trash_dir/info";
         opendir my($dh), "$trash_dir/info"
-            or die "Can't read trash info dir: $!";
+            or die "Can't read trash info dir $trash_dir/info: $!";
         for my $e (readdir $dh) {
             next unless $e =~ /\.trashinfo$/;
             local $/;
