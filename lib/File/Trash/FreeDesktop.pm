@@ -61,7 +61,6 @@ sub _select_trash {
     # leaf. otherwise: /mnt/sym -> / will cause mount point to become / instead
     # of /mnt
     my $afile2 = $afile; $afile2 =~ s!/[^/]+\z!! if (-l $file0);
-    say "afile2=$afile2";
     my $file_mp = Sys::Filesystem::MountPoint::path_to_mount_point($afile2);
 
     $self->{_home_mp} //= Sys::Filesystem::MountPoint::path_to_mount_point(
