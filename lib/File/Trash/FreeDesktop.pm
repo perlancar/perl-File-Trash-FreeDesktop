@@ -61,48 +61,35 @@ sub _select_trash {
     # leaf. otherwise: /mnt/sym -> / will cause mount point to become / instead
     # of /mnt
     my $afile2 = $afile; $afile2 =~ s!/[^/]+\z!! if (-l $file0);
-    my $mp = Sys::Filesystem::MountPoint::path_to_mount_point($afile2);
+    say "afile2=$afile2";
+    my $file_mp = Sys::Filesystem::MountPoint::path_to_mount_point($afile2);
 
     $self->{_home_mp} //= Sys::Filesystem::MountPoint::path_to_mount_point(
         $self->{_home});
 
-    my @trash_dirs;
-    my $home_trash = $self->_home_trash;
-    if ($self->{_home_mp} eq $mp) {
-        @trash_dirs = ($self->_home_trash);
-    } else {
-        my $mp = $mp eq "/" ? "" : $mp; # prevent double-slash //
-        @trash_dirs = ("$mp/.Trash-$>", "$mp/.Trash/$>");
+    # try home trash
+    if ($self->{_home_mp} eq $file_mp) {
+        my $trash_dir = $self->_home_trash;
+        $log->tracef("Selected home trash for %s = %s", $afile, $trash_dir);
+        $self->_mk_home_trash;
+        return $trash_dir;
     }
-    #$log->tracef("mp=%s, afile=%s, trash_dirs = %s", $mp,$afile,\@trash_dirs);
 
-    my ($sel, $create);
-    for (@trash_dirs) {
-        my @st = stat;
-        if (-d _) {
-            $sel = $_;
-            # will we be able to write to this dir? (same owner or we are root).
-            # we "create" anyway to fix missing files/ or info/ subdir (happens
-            # from time to time for trash in /tmp).
-            $create = $st[4] == $> || !$>;
-            last;
+    # try file's mountpoint or mountpoint + "/tmp" (try "/tmp" first if /)
+    for my $dir ($file_mp eq '/' ?
+                     ("/tmp", "/") : ($file_mp, "$file_mp/tmp")) {
+        next unless -w $dir;
+        if ($dir ne $file_mp) {
+            my $mp = Sys::Filesystem::MountPoint::path_to_mount_point($dir);
+            next unless $mp eq $file_mp;
         }
-    }
-    if (!$sel) {
-        $sel = $trash_dirs[0];
-        $create = 1;
-    }
-    $log->tracef("Selected trash for %s = %s", $afile, $sel);
-
-    if ($create) {
-        if ($sel eq $home_trash) {
-            $self->_mk_home_trash;
-        } else {
-            $self->_mk_trash($sel);
-        }
+        my $trash_dir = ($dir eq "/" ? "" : $dir) . "/.Trash-$>";
+        $log->tracef("Selected trash for %s = %s", $afile, $trash_dir);
+        $self->_mk_trash($trash_dir);
+        return $trash_dir;
     }
 
-    return $sel;
+    die "Can't find suitable trash dir";
 }
 
 sub list_trashes {
@@ -117,7 +104,12 @@ sub list_trashes {
     my @res = map { l_abs_path($_) }
         grep {-d} (
             $self->_home_trash,
-            (map { ("$_/.Trash-$>", "$_/.Trash/$>") } @mp)
+            (map { (
+                "$_/.Trash-$>",
+                "$_/tmp/.Trash-$>",
+                "$_/.Trash/$>",
+                "$_/tmp/.Trash/$>",
+                ) } @mp)
         );
 
     List::MoreUtils::uniq(@res);
@@ -434,9 +426,10 @@ a list of records like the sample below:
 
 Trash a file (move it into trash dir).
 
-Will attempt to create C<$home/.local/share/Trash> (or C<$topdir/.Trash-$uid> if
-file does not reside in the same filesystem/device as user's home). Will die if
-attempt fails.
+Will try to find a trash dir that resides in the same filesystem/device as the
+file and is writable. C<$home/.local/share/Trash> is tried first, then
+C<$device_root/.Trash-$uid>, then C<$device_root/tmp/.Trash-$uid>. Will die if
+no suitable trash dir is found.
 
 Will also die if moving file to trash (currently using rename()) fails.
 
@@ -521,6 +514,12 @@ Unless $trash_dir is specified, will empty all existing user's trash dirs. Will
 die on errors.
 
 Return list of files erased.
+
+
+=head1 NOTES
+
+Weird scenario: /PATH/.Trash-UID is mounted on its own scenario? How about
+/PATH/.Trash-UID/{files,info}.
 
 
 =head1 SEE ALSO
