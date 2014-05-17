@@ -8,7 +8,7 @@ use Test::Exception;
 use Test::More 0.96;
 
 use File::chdir;
-use File::Slurp;
+use File::Slurp::Tiny qw(read_file write_file);
 use File::Temp qw(tempdir);
 use File::Trash::FreeDesktop;
 use SHARYANTO::File::Util qw(file_exists);
