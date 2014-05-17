@@ -1,5 +1,12 @@
 Revision history for File-Trash-FreeDesktop
 
+0.14    2014-05-17 (SHARYANTO)
+
+        - No functional changes.
+
+        - Replace File::Slurp with File::Slurp::Tiny.
+
+
 0.13    2014-05-01 (SHARYANTO)
 
         - No functional changes.
