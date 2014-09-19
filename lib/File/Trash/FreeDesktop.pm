@@ -403,7 +403,7 @@ List user's existing trash directories on the system.
 
 Return a list of trash directories. Sample output:
 
- ("/home/steven/.local/share/Trash",
+ ("/home/mince/.local/share/Trash",
   "/tmp/.Trash-1000")
 
 =head2 $trash->list_contents([$trash_dir]) => LIST
@@ -414,10 +414,10 @@ If $trash_dir is not specified, list contents from all existing trash
 directories. Die if $trash_dir does not exist or inaccessible or corrupt. Return
 a list of records like the sample below:
 
- ({entry=>"file1", path=>"/home/steven/file1", deletion_date=>1342061508,
-   trash_dir=>"/home/steven/.local/share/Trash"},
-  {entry=>"file1.2", path=>"/home/steven/sub/file1", deletion_date=>1342061580,
-   trash_dir=>"/home/steven/.local/share/Trash"},
+ ({entry=>"file1", path=>"/home/mince/file1", deletion_date=>1342061508,
+   trash_dir=>"/home/mince/.local/share/Trash"},
+  {entry=>"file1.2", path=>"/home/mince/sub/file1", deletion_date=>1342061580,
+   trash_dir=>"/home/mince/.local/share/Trash"},
   {entry=>"dir1", path=>"/tmp/dir1", deletion_date=>1342061510,
    trash_dir=>"/tmp/.Trash-1000"})
 
