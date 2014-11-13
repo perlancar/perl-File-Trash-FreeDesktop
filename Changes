@@ -1,5 +1,11 @@
 Revision history for File-Trash-FreeDesktop
 
+0.15    2014-11-13 (PERLANCAR)
+
+        - Instead of dying, warn+skip trashdir which does not have info/
+          [RT#100281].
+
+
 0.14    2014-05-17 (SHARYANTO)
 
         - No functional changes.
