@@ -1,5 +1,8 @@
 package File::Trash::FreeDesktop;
 
+# DATE
+# VERSION
+
 use 5.010001;
 use strict;
 use warnings;
@@ -7,8 +10,6 @@ use Log::Any '$log';
 
 use Fcntl;
 use SHARYANTO::File::Util qw(file_exists l_abs_path);
-
-# VERSION
 
 sub new {
     require File::HomeDir::FreeDesktop;
@@ -148,7 +149,7 @@ sub list_contents {
         #next unless -d $trash_dir;
         #next unless -d "$trash_dir/info";
         opendir my($dh), "$trash_dir/info"
-            or die "Can't read trash info dir $trash_dir/info: $!";
+            or do { warn "Can't read trash info dir $trash_dir/info: $!";next };
         for my $e (readdir $dh) {
             next unless $e =~ /\.trashinfo$/;
             local $/;
