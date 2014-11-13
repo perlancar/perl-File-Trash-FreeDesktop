@@ -5,7 +5,7 @@ use strict;
 use warnings;
 
 use Test::Exception;
-use Test::More 0.96;
+use Test::More 0.98;
 
 use File::chdir;
 use File::Slurp::Tiny qw(read_file write_file);
@@ -164,7 +164,6 @@ subtest "trash symlink" => sub {
 # TODO test: empty for all trashes
 # TODO test: test errors ...
 #   - die on fail to create $topdir/.Trash-$uid
-# TODO: deleting/listing/recovering a symlink
 # TODO: deleting/listing/recovering a symlink with invalid target (-f false)
 
 DONE_TESTING:
