@@ -7,6 +7,7 @@ use warnings;
 use Test::Exception;
 use Test::More 0.98;
 
+use Cwd 'abs_path';
 use File::chdir;
 use File::Slurp::Tiny qw(read_file write_file);
 use File::Temp qw(tempdir);
@@ -30,7 +31,7 @@ diag "home trash is $ht";
 
 subtest "trash" => sub {
     my $tfile = $trash->trash("f1");
-    is($tfile, "$dir/.local/share/Trash/files/f1",
+    is(abs_path($tfile), abs_path("$dir/.local/share/Trash/files/f1"),
        "return value of trash()");
     ok((!(-e "f1")), "f1 removed");
     ok((-f ".local/share/Trash/info/f1.trashinfo"), "f1.trashinfo created");
