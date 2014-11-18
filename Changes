@@ -1,5 +1,13 @@
 Revision history for File-Trash-FreeDesktop
 
+0.16    2014-11-18 (PERLANCAR)
+
+	- No functional changes.
+
+	- Use abs_path() first when comparing path, to avoid test failures
+	  [CT].
+
+
 0.15    2014-11-13 (PERLANCAR)
 
         - Instead of dying, warn+skip trashdir which does not have info/
