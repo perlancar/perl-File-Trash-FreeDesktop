@@ -9,7 +9,7 @@ use warnings;
 use Log::Any '$log';
 
 use Fcntl;
-use SHARYANTO::File::Util qw(file_exists l_abs_path);
+use File::MoreUtil qw(file_exists l_abs_path);
 
 sub new {
     require File::HomeDir::FreeDesktop;
