@@ -1,5 +1,13 @@
 Revision history for File-Trash-FreeDesktop
 
+0.17    2014-12-05 (PERLANCAR)
+
+	- No functional changes.
+
+	- Use new name of renamed module SHARYANTO::File::Util ->
+	  File::MoreUtil.
+
+
 0.16    2014-11-18 (PERLANCAR)
 
 	- No functional changes.
