@@ -171,7 +171,7 @@ DONE_TESTING:
 done_testing;
 if (Test::More->builder->is_passing) {
     #diag "all tests successful, deleting test data dir";
-    $CWD = "/" unless $ENV{NO_CLEANUP};
+    $CWD = "/" unless $ENV{DEBUG_KEEP_TEMPDIR};
 } else {
     diag "there are failing tests, not deleting test data dir ($dir)";
 }
