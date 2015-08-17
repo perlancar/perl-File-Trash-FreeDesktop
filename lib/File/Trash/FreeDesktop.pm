@@ -6,7 +6,7 @@ package File::Trash::FreeDesktop;
 use 5.010001;
 use strict;
 use warnings;
-use Log::Any '$log';
+use Log::Any::IfLOG '$log';
 
 use Fcntl;
 use File::MoreUtil qw(file_exists l_abs_path);
