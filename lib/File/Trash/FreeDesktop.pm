@@ -6,7 +6,7 @@ package File::Trash::FreeDesktop;
 use 5.010001;
 use strict;
 use warnings;
-use Log::Any::IfLOG '$log';
+use Log::ger;
 
 use Fcntl;
 use File::MoreUtil qw(file_exists l_abs_path);
@@ -29,7 +29,7 @@ sub _mk_trash {
     for ("", "/files", "/info") {
         my $d = "$trash_dir$_";
         unless (-d $d) {
-            $log->tracef("Creating directory %s ...", $d);
+            log_trace("Creating directory %s ...", $d);
             mkdir $d, 0700 or die "Can't mkdir $d: $!";
         }
     }
@@ -70,7 +70,7 @@ sub _select_trash {
     # try home trash
     if ($self->{_home_mp} eq $file_mp) {
         my $trash_dir = $self->_home_trash;
-        $log->tracef("Selected home trash for %s = %s", $afile, $trash_dir);
+        log_trace("Selected home trash for %s = %s", $afile, $trash_dir);
         $self->_mk_home_trash;
         return $trash_dir;
     }
@@ -84,7 +84,7 @@ sub _select_trash {
             next unless $mp eq $file_mp;
         }
         my $trash_dir = ($dir eq "/" ? "" : $dir) . "/.Trash-$>";
-        $log->tracef("Selected trash for %s = %s", $afile, $trash_dir);
+        log_trace("Selected trash for %s = %s", $afile, $trash_dir);
         $self->_mk_trash($trash_dir);
         return $trash_dir;
     }
@@ -229,7 +229,7 @@ sub trash {
     syswrite($fh, "[Trash Info]\nPath=$afile\nDeletionDate=$ts\n");
     close $fh or die "Can't write trash info for $name in $trash_dir: $!";
 
-    $log->tracef("Trashing %s -> %s ...", $afile, $tfile);
+    log_trace("Trashing %s -> %s ...", $afile, $tfile);
     unless (rename($afile, $tfile)) {
         unlink "$trash_dir/info/$name.trashinfo";
         die "Can't rename $afile to $tfile: $!";
@@ -275,7 +275,7 @@ sub recover {
     my $trash_dir = $res[0]{trash_dir};
     my $ifile = "$trash_dir/info/$res[0]{entry}.trashinfo";
     my $tfile = "$trash_dir/files/$res[0]{entry}";
-    $log->tracef("Recovering from trash %s -> %s ...", $tfile, $afile);
+    log_trace("Recovering from trash %s -> %s ...", $tfile, $afile);
     unless (rename($tfile, $afile)) {
         die "Can't rename $tfile to $afile: $!";
     }
