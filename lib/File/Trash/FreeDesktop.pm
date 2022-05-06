@@ -1,8 +1,5 @@
 package File::Trash::FreeDesktop;
 
-# DATE
-# VERSION
-
 use 5.010001;
 use strict;
 use warnings;
@@ -10,6 +7,11 @@ use Log::ger;
 
 use Fcntl;
 use File::MoreUtil qw(file_exists l_abs_path);
+
+# AUTHORITY
+# DATE
+# DIST
+# VERSION
 
 sub new {
     require File::HomeDir::FreeDesktop;
@@ -64,8 +66,16 @@ sub _select_trash {
     my $afile2 = $afile; $afile2 =~ s!/[^/]+\z!! if (-l $file0);
     my $file_mp = Sys::Filesystem::MountPoint::path_to_mount_point($afile2);
 
+    if ($ENV{PERL_FILE_TRASH_FREEDESKTOP_DEBUG}) {
+        log_trace "File's mountpoint for file $file0 is $file_mp";
+    }
+
     $self->{_home_mp} //= Sys::Filesystem::MountPoint::path_to_mount_point(
         $self->{_home});
+
+    if ($ENV{PERL_FILE_TRASH_FREEDESKTOP_DEBUG}) {
+        log_trace "Home mountpoint for file $file0 is $self->{_home_mp}";
+    }
 
     # try home trash
     if ($self->{_home_mp} eq $file_mp) {
@@ -76,9 +86,16 @@ sub _select_trash {
     }
 
     # try file's mountpoint or mountpoint + "/tmp" (try "/tmp" first if /)
+    my $suggestion = '';
     for my $dir ($file_mp eq '/' ?
                      ("/tmp", "/") : ($file_mp, "$file_mp/tmp")) {
-        next unless -w $dir;
+        unless (-w $dir) {
+            if ($ENV{PERL_FILE_TRASH_FREEDESKTOP_DEBUG}) {
+                log_trace "Directory $dir is not writable, skipped";
+            }
+            $suggestion = ", try making directory $dir writable?";
+            next;
+        }
         if ($dir ne $file_mp) {
             my $mp = Sys::Filesystem::MountPoint::path_to_mount_point($dir);
             next unless $mp eq $file_mp;
@@ -520,6 +537,14 @@ Return list of files erased.
 
 Weird scenario: /PATH/.Trash-UID is mounted on its own scenario? How about
 /PATH/.Trash-UID/{files,info}.
+
+
+=head1 ENVIRONMENT
+
+=head2 PERL_FILE_TRASH_FREEDESKTOP_DEBUG
+
+Bool, if set to true will produce additional logging statements using
+L<Log::ger> at the C<trace> level.
 
 
 =head1 SEE ALSO
