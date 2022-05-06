@@ -89,11 +89,11 @@ sub _select_trash {
         return $trash_dir;
     }
 
-    die "Can't find suitable trash dir";
+    die "Can't find suitable trash dir$suggestion";
 }
 
 sub list_trashes {
-    require List::MoreUtils;
+    require List::Util;
     require Sys::Filesystem;
 
     my ($self) = @_;
@@ -112,7 +112,7 @@ sub list_trashes {
                 ) } @mp)
         );
 
-    List::MoreUtils::uniq(@res);
+    List::Util::uniq(@res);
 }
 
 sub _parse_trashinfo {
