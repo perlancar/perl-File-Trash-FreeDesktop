@@ -1,3 +1,11 @@
+0.200   2022-05-06  Released-By: PERLANCAR; Urgency: medium
+
+	- [ux] Add more logging statement and a more useful error message,
+	  observe PERL_FILE_TRASH_FREEDESKTOP_DEBUG.
+
+	- [internal] Replace List::MoreUtils with List::Util.
+
+
 0.19    2017-07-10  Released-By: PERLANCAR
 
 	- No functional changes.

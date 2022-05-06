@@ -171,7 +171,8 @@ sub list_contents {
             next unless $e =~ /\.trashinfo$/;
             local $/;
             my $ifile = "$trash_dir/info/$e";
-            open my($fh), $ifile or die "Can't open trash info file $e: $!";
+            open my($fh), "<", $ifile
+                or die "Can't open trash info file $e: $!";
             my $content = <$fh>;
             close $fh;
             my $pres = $self->_parse_trashinfo($content);
@@ -215,7 +216,7 @@ sub trash {
 
     unless (file_exists $file0) {
         if ($opts->{on_not_found} eq 'ignore') {
-            return undef;
+            return undef; ## no critic: Subroutines::ProhibitExplicitReturnUndef
         } else {
             die "File does not exist: $file0";
         }
