@@ -550,11 +550,33 @@ L<Log::ger> at the C<trace> level.
 
 =head1 SEE ALSO
 
-[1] http://freedesktop.org/wiki/Specifications/trash-spec
+=head2 Specification
 
-Related modules on CPAN:
+L<https://freedesktop.org/wiki/Specifications/trash-spec>
 
-=over 4
+=head2 CLI utilities
+
+=over
+
+=item * App::TrashUtils
+
+A set of CLI's written in Perl: L<trash-empty>, L<trash-list>,
+L<trash-list-trashes>, L<trash-put>, L<trash-restore>, L<trash-rm>.
+
+=item * L<trash-u> (from App::trash::u)
+
+An alternative CLI, with undo support.
+
+=item * trash-cli
+
+A set of CLI's written in Python: C<trash-empty>, C<trash-list>, C<trash-put>,
+C<trash-restore>, C<trash-rm>.
+
+L<https://github.com/andreafrancia/trash-cli>
+
+=head2 Related CPAN modules
+
+=over
 
 =item * L<Trash::Park>
 
