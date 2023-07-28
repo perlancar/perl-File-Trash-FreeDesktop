@@ -574,6 +574,8 @@ C<trash-restore>, C<trash-rm>.
 
 L<https://github.com/andreafrancia/trash-cli>
 
+=back
+
 =head2 Related CPAN modules
 
 =over
