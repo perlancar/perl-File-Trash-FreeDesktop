@@ -1,3 +1,14 @@
+0.202   2023-07-29  Released-By: PERLANCAR; Urgency: medium
+
+        - list_contents(): rename (undocumented) filtering option
+          search_path to path, add other filtering options path_re,
+          path_wildcard, filename, filename_re, filename_wildcard.
+
+        - When parsing .trashinfo files, make DeletionDate parameter optional.
+
+        - [doc] Add description of trash directory structure.
+
+
 0.201   2023-07-28  Released-By: PERLANCAR; Urgency: low
 
         - No functional changes.
