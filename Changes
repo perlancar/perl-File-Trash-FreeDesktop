@@ -1,3 +1,8 @@
+0.203   2023-07-29  Released-By: PERLANCAR; Urgency: medium
+
+        - Use globstar option when matching with wildcard.
+
+
 0.202   2023-07-29  Released-By: PERLANCAR; Urgency: medium
 
         - list_contents(): rename (undocumented) filtering option
