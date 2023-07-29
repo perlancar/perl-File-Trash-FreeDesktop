@@ -135,16 +135,19 @@ sub list_trashes {
 sub _parse_trashinfo {
     require Time::Local;
 
+    # we use regex parsing instead of INI to be simpler
     my ($self, $content) = @_;
     $content =~ /\A\[Trash Info\]/m or return "No header line";
     my $res = {};
     $content =~ /^Path=(.+)/m or return "No Path line";
     $res->{path} = $1;
-    $content =~ /^DeletionDate=(\d{4})-?(\d{2})-?(\d{2})T(\d\d):(\d\d):(\d\d)$/m
-        or return "No/invalid DeletionDate line";
-    $res->{deletion_date} = Time::Local::timelocal(
-        $6, $5, $4, $3, $2-1, $1-1900)
-        or return "Invalid date: $1-$2-$3T$4-$5-$6";
+  PARSE_DELETIONDATE: {
+        $content =~ /^DeletionDate=(\d{4})-?(\d{2})-?(\d{2})T(\d\d):(\d\d):(\d\d)$/m
+            or do { warn "No/invalid DeletionDate line for path $res->{path}"; last PARSE_DELETIONDATE };
+        $res->{deletion_date} = Time::Local::timelocal(
+            $6, $5, $4, $3, $2-1, $1-1900)
+            or do { warn "Invalid deletion date: $1-$2-$3T$4-$5-$6 when parsing trashinfo for path $res->{path}"; last PARSE_DELETIONDATE };
+    }
     $res;
 }
 
