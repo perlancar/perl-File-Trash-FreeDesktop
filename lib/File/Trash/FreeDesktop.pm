@@ -190,7 +190,7 @@ sub list_contents {
                 if (defined $opts->{path_wildcard}) {
                     unless (defined $path_wc_re) {
                         require String::Wildcard::Bash;
-                        $path_wc_re = String::Wildcard::Bash::convert_wildcard_to_re($opts->{path_wildcard});
+                        $path_wc_re = String::Wildcard::Bash::convert_wildcard_to_re({globstar=>1}, $opts->{path_wildcard});
                     }
                     next ENTRY unless $parse_res->{path} =~ $path_wc_re;
                 }
@@ -205,7 +205,7 @@ sub list_contents {
                     if (defined $opts->{filename_wildcard}) {
                         unless (defined $filename_wc_re) {
                             require String::Wildcard::Bash;
-                            $filename_wc_re = String::Wildcard::Bash::convert_wildcard_to_re($opts->{filename_wildcard});
+                            $filename_wc_re = String::Wildcard::Bash::convert_wildcard_to_re({globstar=>1}, $opts->{filename_wildcard});
                         }
                         next ENTRY unless $filename =~ $filename_wc_re;
                     }
