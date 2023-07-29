@@ -29,6 +29,51 @@ write_text("sub/f2", "sub/f2");
 my $ht = $trash->_home_trash;
 diag "home trash is $ht";
 
+subtest "list_contents" => sub {
+    $trash->trash("f1");
+    $trash->trash("f2");
+
+    my @contents;
+
+    @contents = $trash->list_contents();
+    is(scalar(@contents), 2);
+    is($contents[0]{entry}, "f1");
+    is($contents[1]{entry}, "f2");
+
+    # path filter
+    @contents = $trash->list_contents({path=>"$dir/f1"});
+    is(scalar(@contents), 1);
+    is($contents[0]{path}, "$dir/f1");
+
+    # path_wildcard filter
+    @contents = $trash->list_contents({path_wildcard=>"$dir/*2"});
+    is(scalar(@contents), 1);
+    is($contents[0]{path}, "$dir/f2");
+
+    # path_re filter
+    @contents = $trash->list_contents({path_re=>qr/[1]$/});
+    is(scalar(@contents), 1);
+    is($contents[0]{path}, "$dir/f1");
+
+    # filename filter
+    @contents = $trash->list_contents({filename=>"f2"});
+    is(scalar(@contents), 1);
+    is($contents[0]{path}, "$dir/f2");
+
+    # path_wildcard filter
+    @contents = $trash->list_contents({filename_wildcard=>"f[13]"});
+    is(scalar(@contents), 1);
+    is($contents[0]{path}, "$dir/f1");
+
+    # path_re filter
+    @contents = $trash->list_contents({filename_re=>qr/^f[24]$/});
+    is(scalar(@contents), 1);
+    is($contents[0]{path}, "$dir/f2");
+
+    $trash->recover("f1");
+    $trash->recover("f2");
+};
+
 subtest "trash" => sub {
     my $tfile = $trash->trash("f1");
     is(abs_path($tfile), abs_path("$dir/.local/share/Trash/files/f1"),
@@ -161,7 +206,6 @@ subtest "trash symlink" => sub {
 
 # TODO test: {trash,recover,erase} in $topdir/.Trash-$uid
 # TODO test: list_trashes
-# TODO test: list_contents for all trashes
 # TODO test: empty for all trashes
 # TODO test: test errors ...
 #   - die on fail to create $topdir/.Trash-$uid

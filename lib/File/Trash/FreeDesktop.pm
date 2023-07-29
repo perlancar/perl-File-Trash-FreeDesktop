@@ -164,12 +164,14 @@ sub list_contents {
 
     my @trash_dirs = $trash_dir0 ? ($trash_dir0) : ($self->list_trashes);
     my @res;
+    my ($path_wc_re, $filename_wc_re);
   L1:
     for my $trash_dir (@trash_dirs) {
         #next unless -d $trash_dir;
         #next unless -d "$trash_dir/info";
         opendir my($dh), "$trash_dir/info"
-            or do { warn "Can't read trash info dir $trash_dir/info: $!";next };
+            or do { warn "Can't read trash info dir $trash_dir/info: $!"; next };
+      ENTRY:
         for my $e (readdir $dh) {
             next unless $e =~ /\.trashinfo$/;
             local $/;
@@ -178,23 +180,52 @@ sub list_contents {
                 or die "Can't open trash info file $e: $!";
             my $content = <$fh>;
             close $fh;
-            my $pres = $self->_parse_trashinfo($content);
-            die "Can't parse trash info file $e: $pres" unless ref($pres);
-            if (defined $opts->{search_path}) {
-                next unless $pres->{path} eq $opts->{search_path};
-            }
+            my $parse_res = $self->_parse_trashinfo($content);
+            die "Can't parse trash info file $e: $parse_res" unless ref($parse_res);
+
+          FILTER: {
+                if (defined $opts->{path}) {
+                    next ENTRY unless $parse_res->{path} eq $opts->{path};
+                }
+                if (defined $opts->{path_wildcard}) {
+                    unless (defined $path_wc_re) {
+                        require String::Wildcard::Bash;
+                        $path_wc_re = String::Wildcard::Bash::convert_wildcard_to_re($opts->{path_wildcard});
+                    }
+                    next ENTRY unless $parse_res->{path} =~ $path_wc_re;
+                }
+                if (defined $opts->{path_re}) {
+                    next ENTRY unless $parse_res->{path} =~ $opts->{path_re};
+                }
+              FILTER_FILENAME: {
+                    (my $filename = $parse_res->{path}) =~ s!.+/!!;
+                    if (defined $opts->{filename}) {
+                        next ENTRY unless $filename eq $opts->{filename};
+                    }
+                    if (defined $opts->{filename_wildcard}) {
+                        unless (defined $filename_wc_re) {
+                            require String::Wildcard::Bash;
+                            $filename_wc_re = String::Wildcard::Bash::convert_wildcard_to_re($opts->{filename_wildcard});
+                        }
+                        next ENTRY unless $filename =~ $filename_wc_re;
+                    }
+                    if (defined $opts->{filename_re}) {
+                        next ENTRY unless $filename =~ $opts->{filename_re};
+                    }
+                } # FILTER_FILENAME
+            } # FILTER
+
             my $afile = "$trash_dir/files/$e"; $afile =~ s/\.trashinfo\z//;
             if (defined $opts->{mtime}) {
                 my @st = lstat($afile);
-                next unless !@st || $st[9] == $opts->{mtime};
+                next ENTRY unless !@st || $st[9] == $opts->{mtime};
             }
             if (defined $opts->{suffix}) {
-                next unless $afile =~ /\.\Q$opts->{suffix}\E\z/;
+                next ENTRY unless $afile =~ /\.\Q$opts->{suffix}\E\z/;
             }
-            $pres->{trash_dir} = $trash_dir;
-            $e =~ s/\.trashinfo//; $pres->{entry} = $e;
-            push @res, $pres;
-            last L1 if defined $opts->{search_path};
+            $parse_res->{trash_dir} = $trash_dir;
+            $e =~ s/\.trashinfo//; $parse_res->{entry} = $e;
+            push @res, $parse_res;
         }
     }
 
@@ -281,9 +312,9 @@ sub recover {
     my $afile = l_abs_path($file0);
 
     my @res = $self->list_contents({
-        search_path => $afile,
-        mtime       => $opts->{mtime},
-        suffix      => $opts->{suffix},
+        path   => $afile,
+        mtime  => $opts->{mtime},
+        suffix => $opts->{suffix},
     }, $trash_dir0);
     unless (@res) {
         if ($opts->{on_not_found} eq 'ignore') {
@@ -309,7 +340,7 @@ sub _erase {
     my ($self, $file0, $trash_dir) = @_;
     my $afile = defined($file0) ? l_abs_path($file0) : undef;
 
-    my @ct = $self->list_contents({search_path=>$afile}, $trash_dir);
+    my @ct = $self->list_contents({path=>$afile}, $trash_dir);
 
     my @res;
     for (@ct) {
@@ -384,7 +415,7 @@ This module lets you trash/erase/restore files, also list the contents of trash
 directories. This module follows the freedesktop.org trash specification [1],
 with some notes/caveats:
 
-=over 4
+=over
 
 =item * For home trash, $HOME/.local/share/Trash is used instead of $HOME/.Trash
 
@@ -444,13 +475,13 @@ Return a list of trash directories. Sample output:
  ("/home/mince/.local/share/Trash",
   "/tmp/.Trash-1000")
 
-=head2 $trash->list_contents([$trash_dir]) => LIST
+=head2 $trash->list_contents([ \%opts ], [ $trash_dir ]) => LIST
 
 List contents of trash director(y|ies).
 
-If $trash_dir is not specified, list contents from all existing trash
-directories. Die if $trash_dir does not exist or inaccessible or corrupt. Return
-a list of records like the sample below:
+If C<$trash_dir> is not specified, list contents from all existing trash
+directories. Die if C<$trash_dir> does not exist or inaccessible or corrupt.
+Return a list of records like the sample below:
 
  ({entry=>"file1", path=>"/home/mince/file1", deletion_date=>1342061508,
    trash_dir=>"/home/mince/.local/share/Trash"},
@@ -458,6 +489,53 @@ a list of records like the sample below:
    trash_dir=>"/home/mince/.local/share/Trash"},
   {entry=>"dir1", path=>"/tmp/dir1", deletion_date=>1342061510,
    trash_dir=>"/tmp/.Trash-1000"})
+
+The C<path> key is the original path of the file before it is put into the
+trash.
+
+Known options:
+
+=over
+
+=item * suffix
+
+Str.
+
+=item * path_wildcard
+
+Wildcard pattern to be matched against path. Only matching entries will be
+returned.
+
+=item * path_re
+
+Regexp pattern to be matched against path. Only matching entries will be
+returned.
+
+=item * path
+
+Exact matching against path. Only matching entries will be returned.
+
+=item * filename_wildcard
+
+Wildcard pattern to be matched against the filename part of path. Only matching
+entries will be returned.
+
+=item * filename_re
+
+Regexp pattern to be matched against the filename part of path. Only matching
+entries will be returned.
+
+=item * filename
+
+Exact matching against filename part of path. Only matching entries will be
+returned.
+
+=item * mtime
+
+Int. Only return entries where the trashed file's modification time matches this
+<value.
+
+=back
 
 =head2 $trash->trash([\%opts, ]$file) => STR
 
