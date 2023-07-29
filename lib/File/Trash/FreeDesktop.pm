@@ -399,13 +399,29 @@ It should not matter though, because trash directories are per-filesystem.
 
 =back
 
-Some other notes:
+Keywords: recycle bin
 
-=over 4
 
-=item *
+=head1 THE TRASH STRUCTURE
 
-=back
+The following is a short description of the trash structure.
+
+A trash directory is a per-filesystem, per-user directory structure to allow
+files to be "trashed", i.e. to be put inside and to be recovered to its original
+location later should a user changes his/her mind and wants the files back.
+Otherwise, user can "empty" the trash to delete files permanently.
+
+A trash directory, e.g. C</home/USER1/.local/share/Trash>, contains two
+subdirectories: C<info> and C<files>. The C<files> contain the actual trashed
+files and their name must be unique. Thus if C</home/USER1/foo.txt> is trashed
+and then another C</home/USER1/foo.txt> is trashed again, the second file must
+be renamed to C</home/USER1/foo (1).txt> or something else.
+
+The C<info> subdirectory contains the metadata for each trashed file, with each
+metadata put in an INI of the same name of the correspoonding file in C<files>
+with C<.trashinfo> suffix, under the INI C<Trash Info> section. Known INI
+parameters include: C<Path> (the original name/path of the trashed file) and
+C<DeletionDate> (date and time, in ISO8601 format).
 
 
 =head1 METHODS
