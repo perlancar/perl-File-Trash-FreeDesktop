@@ -1,3 +1,9 @@
+0.204   2023-07-31  Released-By: PERLANCAR; Urgency: medium
+
+        - Allow erase() and recover() to accept multiple files via
+          {filename,path}_{wildcard,re} options.
+
+
 0.203   2023-07-29  Released-By: PERLANCAR; Urgency: medium
 
         - Use globstar option when matching with wildcard.

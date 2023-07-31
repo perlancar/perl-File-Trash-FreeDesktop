@@ -331,7 +331,6 @@ sub _erase {
     my ($self, $opts, $trash_dir) = @_;
 
     my @ct = $self->list_contents($opts, $trash_dir);
-    use DD; dd \@ct;
     my @res;
     for my $e (@ct) {
         my $f = "$e->{trash_dir}/info/$e->{entry}.trashinfo";
@@ -587,27 +586,27 @@ If first argument is a hashref, it will be accepted as options. Known options:
 
 =over 4
 
-=iteme * filename
+=item * filename
 
 See C<list_contents()>.
 
-=iteme * filename_wildcard
+=item * filename_wildcard
 
 See C<list_contents()>.
 
-=iteme * filename_re
+=item * filename_re
 
 See C<list_contents()>.
 
-=iteme * path
+=item * path
 
 See C<list_contents()>.
 
-=iteme * path_wildcard
+=item * path_wildcard
 
 See C<list_contents()>.
 
-=iteme * path_re
+=item * path_re
 
 See C<list_contents()>.
 
