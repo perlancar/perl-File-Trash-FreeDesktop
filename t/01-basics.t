@@ -86,22 +86,37 @@ subtest "trash" => sub {
     ok((!(-e "sub/f1")), "sub/f1 removed");
     ok((-f ".local/share/Trash/info/f1.2.trashinfo"), "f1.2.trashinfo created");
     ok((-f ".local/share/Trash/files/f1.2"), "files/f1.2 created");
+
+    $trash->trash("f2");
+    ok((!(-e "f2")), "f2 removed");
+    ok((-f ".local/share/Trash/info/f2.trashinfo"), "f2.trashinfo created");
+    ok((-f ".local/share/Trash/files/f2"), "files/f2 created");
 };
-# state at this point: T(f1 f2)
+# state at this point: T(f1 sub/f1 f2)
 
 subtest "recover" => sub {
     $trash->recover("f1", $ht);
     ok((-f "f1"), "f1 recreated");
+    ok((-f "sub/f1"), "sub/f1 recreated");
 };
-# state at this point: f1 T(f2)
+# state at this point: f1 sub/f1 T(f2)
 
 subtest "erase" => sub {
-    $trash->erase("sub/f1", $ht);
-    ok(!(-e "sub/f1"), "sub/f1 removed");
-    ok(!(-e ".local/share/Trash/info/f1.2.trashinfo"),"f1.2.trashinfo removed");
-    ok(!(-e ".local/share/Trash/files/f1.2"), "files/f1.2 removed");
+    $trash->erase("f2", $ht);
+    ok(!(-e "f2"), "f2 removed");
+    ok(!(-e ".local/share/Trash/info/f1.2.trashinfo"),"f2.trashinfo removed");
+    ok(!(-e ".local/share/Trash/files/f2"), "files/f2 removed");
+
+    write_text("f3", "");
+    $trash->trash("f3");
+    write_text("f4", "");
+    $trash->trash("f4");
+    # opt: filename_pattern
+    $trash->erase({filename_wildcard=>"f[34]"});
+    ok(!(-e "f3"), "f3 removed");
+    ok(!(-e "f4"), "f4 removed");
 };
-# state at this point: f1 T()
+# state at this point: f1 sub/f1 T()
 
 subtest "empty" => sub {
     $trash->trash("sub"); # also test removing directories
@@ -117,10 +132,18 @@ subtest "trash nonexisting file" => sub {
 };
 # state at this point: T()
 
-subtest "recover nonexisting file" => sub {
-    dies_ok  { $trash->recover("f3") } "recover nonexisting file -> dies";
-    lives_ok { $trash->recover({on_not_found=>'ignore'}, "f3") }
-        "on_not_found=ignore";
+# state at this point: T()
+
+subtest "recover" => sub {
+    write_text("f3", "");
+    write_text("f4", "");
+    $trash->trash("f3");
+    $trash->trash("f4");
+    # option: filename_re
+    $trash->recover({filename_re=>qr/f[34]/});
+    ok((-f "f3"), "f3 recovered");
+    ok((-f "f4"), "f4 recovered");
+    unlink "f3", "f4";
 };
 # state at this point: T()
 
@@ -148,7 +171,6 @@ subtest "recover: mtime opt" => sub {
     utime 1, 20, "f10";
     $trash->trash("f10");
 
-    dies_ok { $trash->recover({mtime=>30}, "f10") } "mtime not found -> dies";
     $trash->recover({mtime=>20}, "f10");
     is(read_text("f10"), "f10.20", "f10 (mtime 20) recovered first");
     unlink "f10";
@@ -170,8 +192,6 @@ subtest "recover: suffix opt" => sub {
         "suffix already exists -> dies";
     unlink "f10";
 
-    dies_ok { $trash->recover({suffix=>"c"}, "f10") }
-        "suffix not found -> dies";
     $trash->recover({suffix=>"b"}, "f10");
     is(read_text("f10"), "f10.b", "f10 (suffix b) recovered first");
     unlink "f10";

@@ -300,73 +300,77 @@ sub recover {
     }
     $opts->{on_not_found}     //= 'die';
     $opts->{on_target_exists} //= 'die';
-    my ($file0, $trash_dir0) = @_;
+    my ($file0, $trash_dir) = @_;
 
-    if (file_exists($file0)) {
-        if ($opts->{on_target_exists} eq 'ignore') {
-            return 0;
-        } else {
-            die "Restore target already exists: $file0";
+    $opts->{filename} //= $file0;
+    my @ct = $self->list_contents($opts, $trash_dir);
+
+  ENTRY:
+    for my $e (@ct) {
+        if (file_exists($e->{path})) {
+            if ($opts->{on_target_exists} eq 'ignore') {
+                next ENTRY;
+            } else {
+                die "Restore target already exists: $e->{path}";
+            }
         }
-    }
-    my $afile = l_abs_path($file0);
-
-    my @res = $self->list_contents({
-        path   => $afile,
-        mtime  => $opts->{mtime},
-        suffix => $opts->{suffix},
-    }, $trash_dir0);
-    unless (@res) {
-        if ($opts->{on_not_found} eq 'ignore') {
-            return 0;
-        } else {
-            die "File not found in trash: $file0";
+        my $afile = l_abs_path($e->{path});
+        my $ifile = "$e->{trash_dir}/info/$e->{entry}.trashinfo";
+        my $tfile = "$e->{trash_dir}/files/$e->{entry}";
+        log_trace("Recovering from trash %s -> %s ...", $tfile, $afile);
+        unless (rename($tfile, $afile)) {
+            die "Can't rename $tfile to $afile: $!";
         }
+        unlink($ifile);
     }
-
-    my $trash_dir = $res[0]{trash_dir};
-    my $ifile = "$trash_dir/info/$res[0]{entry}.trashinfo";
-    my $tfile = "$trash_dir/files/$res[0]{entry}";
-    log_trace("Recovering from trash %s -> %s ...", $tfile, $afile);
-    unless (rename($tfile, $afile)) {
-        die "Can't rename $tfile to $afile: $!";
-    }
-    unlink($ifile);
 }
 
 sub _erase {
     require File::Remove;
 
-    my ($self, $file0, $trash_dir) = @_;
-    my $afile = defined($file0) ? l_abs_path($file0) : undef;
+    my ($self, $opts, $trash_dir) = @_;
 
-    my @ct = $self->list_contents({path=>$afile}, $trash_dir);
-
+    my @ct = $self->list_contents($opts, $trash_dir);
+    use DD; dd \@ct;
     my @res;
-    for (@ct) {
-        my $f = "$_->{trash_dir}/info/$_->{entry}.trashinfo";
+    for my $e (@ct) {
+        my $f = "$e->{trash_dir}/info/$e->{entry}.trashinfo";
         unlink $f or die "Can't remove $f: $!";
         # XXX File::Remove interprets wildcard, what if filename contains
         # wildcard?
-        File::Remove::remove(\1, "$_->{trash_dir}/files/$_->{entry}");
-        push @res, $_->{path};
+        File::Remove::remove(\1, "$e->{trash_dir}/files/$e->{entry}");
+        push @res, $e->{path};
     }
     @res;
 }
 
 sub erase {
-    my ($self, $file, $trash_dir) = @_;
+    my $self = shift;
+    my $opts = ref($_[0]) eq 'HASH' ? {%{shift(@_)}} : {};
+    my ($file, $trash_dir) = @_;
+    $opts->{filename} //= $file;
 
-    die "Please specify file" unless defined $file;
-    $self->_erase($file, $trash_dir);
+    # make sure user specifies at least one of filename
+    # option/$file/filename_wildcard/filename_re/path/path_wildcard/path_re.
+    # specifying no files will include all entries. for that user should be more
+    # explicit and call empty().
+    unless (defined $file or
+            defined $opts->{filename} or
+            defined $opts->{filename_wildcard} or
+            defined $opts->{filename_re} or
+            defined $opts->{path} or
+            defined $opts->{path_wildcard} or
+            defined $opts->{path_re}) {
+        die "Please specify at least file/filename/filename_wildcard/filename_re ".
+            "or path/path_wildcard/path_re";
+    }
+    $self->_erase($opts, $trash_dir);
 }
 
-# XXX currently empty calls _erase, which parses .trashinfo files. this is
-# useless overhead.
 sub empty {
     my ($self, $trash_dir) = @_;
 
-    $self->_erase(undef, $trash_dir);
+    $self->_erase({}, $trash_dir);
 }
 
 1;
@@ -574,19 +578,42 @@ pick a unique suffix.
 
 =head2 $trash->recover([\%opts, ]$file[, $trash_dir])
 
-Recover a file from trash.
+Recover a file or multiple files from trash.
 
-Unless $trash_dir is specified, will search in all existing user's trash dirs.
-Will die on errors.
+Unless C<$trash_dir> is specified, will search in all existing user's trash
+dirs. Will die on errors.
 
 If first argument is a hashref, it will be accepted as options. Known options:
 
 =over 4
 
-=item * on_not_found => STR (default 'die')
+=iteme * filename
 
-Specify what to do when file is not found in the trash. The default is 'die',
-but can also be set to 'ignore' and return immediately.
+See C<list_contents()>.
+
+=iteme * filename_wildcard
+
+See C<list_contents()>.
+
+=iteme * filename_re
+
+See C<list_contents()>.
+
+=iteme * path
+
+See C<list_contents()>.
+
+=iteme * path_wildcard
+
+See C<list_contents()>.
+
+=iteme * path_re
+
+See C<list_contents()>.
+
+=item * mtime
+
+See C<list_contents()>.
 
 =item * on_target_exists => STR (default 'die')
 
@@ -612,12 +639,15 @@ Only recover file having the specified suffix, chosen previously during trash().
 
 =back
 
-=head2 $trash->erase($file[, $trash_dir]) => LIST
+=head2 $trash->erase([ \%opts, ] $file[, $trash_dir]) => LIST
 
-Erase (unlink()) a file in trash.
+Erase (unlink()) a file or multiple files in trash.
 
-Unless $trash_dir is specified, will empty all existing user's trash dirs. Will
-ignore if file does not exist in trash. Will die on errors.
+Unless C<$trash_dir> is specified, will empty all existing user's trash dirs.
+Will ignore if file does not exist in trash. Will die on errors.
+
+To erase multiple files based on wilcard or regexp pattern, use the options. See
+C<list_contents()>.
 
 Return list of files erased.
 
