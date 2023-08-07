@@ -121,12 +121,14 @@ sub list_trashes {
     my @res = map { l_abs_path($_) }
         grep {-d} (
             $self->_home_trash,
-            (map { (
-                "$_/.Trash-$>",
-                "$_/tmp/.Trash-$>",
-                "$_/.Trash/$>",
-                "$_/tmp/.Trash/$>",
+            (
+                $self->{home_only} ? () : (map { (
+                    "$_/.Trash-$>",
+                    "$_/tmp/.Trash-$>",
+                    "$_/.Trash/$>",
+                    "$_/tmp/.Trash/$>",
                 ) } @mp)
+            )
         );
 
     List::Util::uniq(@res);
@@ -467,7 +469,17 @@ C<DeletionDate> (date and time, in ISO8601 format).
 
 Constructor.
 
-Currently there are no known options.
+Known options:
+
+=over
+
+=item * home_only
+
+Bool. If set to true, instruct the module to just look for trash directory under
+the home directory and not search other filesystem mountpoints for possible
+trash directories.
+
+=back
 
 =head2 $trash->list_trashes() => LIST
 

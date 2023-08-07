@@ -18,7 +18,7 @@ my $dir = tempdir(CLEANUP=>1);
 
 $ENV{HOME} = $dir;
 $CWD = $dir;
-my $trash = File::Trash::FreeDesktop->new;
+my $trash = File::Trash::FreeDesktop->new(home_only=>1);
 
 write_text("f1", "f1");
 write_text("f2", "f2");
