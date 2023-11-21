@@ -304,7 +304,7 @@ sub recover {
     $opts->{on_target_exists} //= 'die';
     my ($file0, $trash_dir) = @_;
 
-    $opts->{filename} //= $file0;
+    $opts->{path} //= $file0;
     my @ct = $self->list_contents($opts, $trash_dir);
 
   ENTRY:
@@ -587,12 +587,18 @@ pick a unique suffix.
 =back
 
 
-=head2 $trash->recover([\%opts, ]$file[, $trash_dir])
+=head2 $trash->recover([\%opts, $orig_path, $trash_dir])
 
 Recover a file or multiple files from trash.
 
 Unless C<$trash_dir> is specified, will search in all existing user's trash
 dirs. Will die on errors.
+
+You need to specify the original path of the file before it was trashed, but you
+can also specify unqualified filename (without path) and/or path patterns via
+options (see below) instead.
+
+If no files are found, the method will simply return.
 
 If first argument is a hashref, it will be accepted as options. Known options:
 
