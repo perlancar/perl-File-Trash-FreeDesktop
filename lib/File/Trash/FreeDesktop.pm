@@ -6,7 +6,7 @@ use warnings;
 use Log::ger;
 
 use Fcntl;
-use File::MoreUtil qw(file_exists l_abs_path);
+use File::Util::Test qw(file_exists l_abs_path);
 
 # AUTHORITY
 # DATE
